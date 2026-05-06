@@ -1,0 +1,64 @@
+name: Scheduled Headless Browser Visit
+
+on:
+  schedule:
+    - cron: '10 */4 * * *'
+  workflow_dispatch:
+
+jobs:
+  visit-and-click:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    env:
+      TARGET_URLS: ${{ secrets.TARGET_URLS }}
+      COOKIE_MAP: ${{ secrets.COOKIE_MAP }}
+      USER_AGENT: ${{ secrets.USER_AGENT }}
+      IMGE_API_KEY: ${{ secrets.IMGE_API_KEY }}
+      IMGE_ALBUM_ID: ${{ secrets.IMGE_ALBUM_ID }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      # ---------------- Cookie 缓存（固定 key） ----------------
+      - name: Restore Cookie Cache
+        uses: actions/cache@v4
+        with:
+          path: cookies.json
+          key: cookie-cache-v1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Puppeteer script
+        run: node visit.js
+
+      - name: Save Cookie Cache
+        uses: actions/cache@v4
+        with:
+          path: cookies.json
+          key: cookie-cache-v1
+
+      # ---------------- Keep-alive commit ----------------
+      - name: Create keep-alive commit
+        run: |
+          echo "# Keep-alive commit" >> keepalive.md 2>/dev/null || true
+          echo "" >> keepalive.md
+          echo "Last keep-alive: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> keepalive.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add keepalive.md || true
+
+      - name: Commit & Push if changed
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "keep-alive"
+          file_pattern: keepalive.md
+          push_options: '--force-with-lease'
