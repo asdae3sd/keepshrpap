@@ -148,7 +148,8 @@ const uploadToImge = async (filePath) => {
             }
           } catch (_) {}
         }
-        await page.waitForTimeout(5000); // 5 秒浏览时间
+        await new Promise(resolve => setTimeout(resolve, 5000));
+
         // 截图
         const screenshotPath = path.join(__dirname, `screenshot_${index + 1}.jpg`);
         await page.screenshot({ path: screenshotPath, type: 'jpeg', quality: 80 }).catch(() => {
