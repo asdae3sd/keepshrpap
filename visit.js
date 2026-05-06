@@ -59,14 +59,18 @@ const saveCookies = async (page, domain) => {
 // 上传图床（仅提示失败）
 const uploadToImge = async (filePath) => {
   const formdata = new FormData();
-  formdata.append("key", IMGE_API_KEY);
-  formdata.append("source", fs.createReadStream(filePath));
+  formdata.append("file", fs.createReadStream(filePath));
   formdata.append("album_id", ALBUM_ID);
   formdata.append("nsfw", '1');
+  const myHeaders = new Headers();
+  myHeaders.append("Authorization", 'Bearer ' + IMGE_API_KEY);
+  
 
   try {
-    const response = await fetch("https://im.ge/api/1/upload", {
+    const response = await fetch("https://im.ge/api/v1/upload", {
+      
       method: 'POST',
+      headers: myHeaders,
       body: formdata,
     });
 
